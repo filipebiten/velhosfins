@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Velhos Fins — TalkFlow 02 — Rede Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --preto:#0A0A0A;
+  --preto-suave:#161616;
+  --off-white:#EBE8E0;
+  --teal:#186678;
+  --teal-claro:#2589A0;
+  --teal-escuro:#0F4856;
+  --cinza-claro:#D8D4CA;
+  --ease:cubic-bezier(.32,.72,0,1);
+  --font-display:'Bebas Neue',Impact,Oswald,sans-serif;
+  --font-body:'Hanken Grotesk',Poppins,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--preto);color:var(--off-white);font-family:var(--font-body);overflow-x:hidden;}
+#app{position:relative;min-height:100vh;}
+button,input{font-family:var(--font-body);}
+a{color:var(--teal-claro);}
+
+/* ---- textura de marca: ondas concentricas + grain, sempre atras do conteudo ---- */
+.bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.bg-waves{opacity:.07;background-repeat:no-repeat,no-repeat;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><g fill='none' stroke='%232589A0' stroke-width='5'><circle cx='450' cy='450' r='90'/><circle cx='450' cy='450' r='180'/><circle cx='450' cy='450' r='270'/><circle cx='450' cy='450' r='360'/><circle cx='450' cy='450' r='450'/></g></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><g fill='none' stroke='%23186678' stroke-width='4'><circle cx='300' cy='300' r='60'/><circle cx='300' cy='300' r='130'/><circle cx='300' cy='300' r='200'/><circle cx='300' cy='300' r='270'/></g></svg>");
+  background-position:right -220px bottom -220px, left -160px top -160px;
+  background-size:900px 900px, 600px 600px;
+}
+.bg-grain{opacity:.045;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+.display{font-family:var(--font-display);text-transform:uppercase;letter-spacing:-0.01em;}
+.display-huge{font-size:clamp(3.5rem,13vw,11rem);line-height:.94;}
+.display-lg{font-size:clamp(2.2rem,7vw,5.5rem);line-height:1;}
+.display-md{font-size:clamp(1.4rem,4vw,2.6rem);line-height:1.05;}
+.accent{color:var(--teal-claro);}
+
+.btn{font-weight:700;padding:16px 30px;border-radius:999px;border:2px solid transparent;cursor:pointer;font-size:1.05rem;background:transparent;color:var(--off-white);transition:transform .25s var(--ease),background .25s var(--ease),border-color .25s var(--ease),opacity .25s var(--ease);}
+.btn-primary{background:var(--teal);}
+.btn-primary:hover{background:var(--teal-claro);transform:translateY(-2px);}
+.btn-outline{border-color:var(--cinza-claro);}
+.btn-outline:hover{border-color:var(--teal-claro);color:var(--teal-claro);}
+.btn-ghost{border:none;color:var(--cinza-claro);padding:8px 14px;font-size:.9rem;}
+.btn-ghost:hover{color:var(--off-white);}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none;}
+.btn-sm{padding:8px 16px;font-size:.85rem;border-radius:999px;}
+.btn-block{width:100%;}
+
+.card{background:var(--preto-suave);border-radius:18px;padding:18px;border:1px solid rgba(216,212,202,.10);}
+.pill{display:inline-block;padding:4px 14px;border-radius:999px;border:1px solid var(--teal-claro);color:var(--teal-claro);font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+
+input[type=text],input[type=number]{background:var(--preto-suave);border:1px solid var(--cinza-claro);color:var(--off-white);border-radius:10px;padding:10px 12px;font-size:1rem;}
+input[type=text]:focus,input[type=number]:focus{outline:none;border-color:var(--teal-claro);}
+input[type=number]{width:100px;}
+
+::-webkit-scrollbar{width:10px;}
+::-webkit-scrollbar-thumb{background:var(--preto-suave);border-radius:10px;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes popIn{from{opacity:0;transform:scale(.55) translateY(30px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+@keyframes golPop{0%{transform:scale(.4) rotate(-8deg);opacity:0;}60%{transform:scale(1.15) rotate(3deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
+.fade-up{animation:fadeUp .5s var(--ease);}
+.pop-in{animation:popIn .55s var(--ease);}
+.pulse{animation:pulse 1.4s ease-in-out infinite;}
+.goal-pop{animation:golPop .6s var(--ease);}
+
+/* ---- landing ---- */
+.landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;padding:24px;position:relative;z-index:1;}
+.landing img.logo{width:min(60vw,220px);}
+.landing .buttons{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+
+/* ---- stage ---- */
+.stage{min-height:100vh;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4vw;position:relative;z-index:1;gap:2vh;}
+.stage-kicker{font-size:clamp(1rem,2vw,1.4rem);color:var(--teal-claro);font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.logo-corner{position:fixed;top:28px;left:28px;width:90px;opacity:.85;z-index:2;}
+.mini-score{position:fixed;top:28px;right:28px;z-index:2;display:flex;gap:14px;font-family:var(--font-display);font-size:1.1rem;color:var(--cinza-claro);background:rgba(10,10,10,.55);padding:8px 16px;border-radius:999px;border:1px solid rgba(216,212,202,.15);}
+.mini-score b{color:var(--teal-claro);margin-left:4px;}
+.timer{font-family:var(--font-display);font-size:clamp(6rem,24vw,19rem);line-height:1;}
+.timer.running{color:var(--teal-claro);}
+.timer.done{color:var(--off-white);}
+.winner-banner{display:flex;flex-direction:column;gap:6px;align-items:center;}
+.winner-name{font-family:var(--font-display);font-size:clamp(3.5rem,11vw,9rem);line-height:1;color:var(--teal-claro);}
+.team-tap{position:fixed;inset:0;z-index:5;background:var(--preto);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;cursor:pointer;}
+.miss-flash{position:fixed;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,.72);font-family:var(--font-display);font-size:clamp(2.5rem,8vw,6rem);color:var(--off-white);text-transform:uppercase;text-align:center;padding:20px;}
+
+.rank-list{width:min(84vw,920px);display:flex;flex-direction:column;gap:14px;margin-top:1vh;}
+.rank-row{display:flex;align-items:center;gap:18px;}
+.rank-name{width:min(28vw,260px);text-align:right;font-family:var(--font-display);font-size:clamp(1.2rem,2.6vw,2.2rem);flex-shrink:0;}
+.rank-track{flex:1;position:relative;background:rgba(216,212,202,.08);border-radius:14px;height:clamp(36px,5vw,54px);overflow:hidden;}
+.rank-bar{position:absolute;inset:0;border-radius:14px;background:var(--teal-escuro);transform-origin:left center;transition:transform 1s var(--ease);}
+.rank-row.winner .rank-bar{background:var(--teal);}
+.rank-value-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:14px;transition:transform 1s var(--ease);}
+.rank-value{font-family:var(--font-display);font-size:clamp(1rem,2vw,1.6rem);}
+
+.podium-wrap{display:flex;align-items:flex-end;gap:22px;justify-content:center;width:100%;max-width:700px;}
+.podium-slot{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.podium-block{width:min(30vw,260px);border-radius:16px 16px 0 0;background:var(--preto-suave);border:1px solid rgba(216,212,202,.15);display:flex;align-items:flex-start;justify-content:center;padding-top:14px;}
+.podium-block.first{height:min(38vh,320px);background:var(--teal);}
+.podium-block.second{height:min(24vh,190px);}
+.podium-rank{font-family:var(--font-display);font-size:2.4rem;}
+
+canvas.confetti{position:fixed;inset:0;z-index:6;pointer-events:none;}
+
+/* ---- control ---- */
+.control{min-height:100vh;display:flex;flex-direction:column;padding:16px 20px 20px;gap:14px;position:relative;z-index:1;}
+.control-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;}
+.control-title{font-family:var(--font-display);font-size:1.5rem;letter-spacing:.03em;}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.score-strip{display:flex;gap:8px;flex-wrap:wrap;}
+.score-chip{background:var(--preto-suave);border-radius:999px;padding:6px 14px;font-size:.85rem;display:flex;gap:8px;align-items:center;border:1px solid rgba(216,212,202,.12);}
+.score-chip b{color:var(--teal-claro);}
+
+.control-main{flex:1;display:flex;flex-direction:column;gap:16px;}
+.setup-grid{display:flex;flex-direction:column;gap:14px;max-width:520px;margin:40px auto;}
+.setup-grid .team-row{display:flex;gap:10px;align-items:center;}
+.team-row input{flex:1;}
+.team-idx{width:28px;text-align:right;color:var(--cinza-claro);font-family:var(--font-display);}
+
+.round-panel{display:flex;flex-direction:column;gap:16px;}
+.round-panel h2{margin:0;font-family:var(--font-display);font-size:1.8rem;}
+.round-panel .subtext{color:var(--cinza-claro);font-size:.9rem;}
+.controls-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.big-clock{font-family:var(--font-display);font-size:3rem;}
+
+.team-btn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.team-btn{background:var(--preto-suave);border:2px solid rgba(216,212,202,.15);border-radius:14px;padding:14px;text-align:left;cursor:pointer;color:var(--off-white);transition:border-color .2s var(--ease),background .2s var(--ease);}
+.team-btn:hover{border-color:var(--teal-claro);}
+.team-btn.active{border-color:var(--teal);background:rgba(24,102,120,.25);}
+.team-btn .n{font-family:var(--font-display);font-size:1.2rem;}
+
+.adjust-panel{background:var(--preto-suave);border-radius:14px;padding:12px 16px;}
+.adjust-panel summary{cursor:pointer;font-weight:700;color:var(--cinza-claro);}
+.adjust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px;}
+.adjust-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--preto);border-radius:10px;padding:8px 10px;}
+.adjust-row .adjust-name{flex:1;min-width:0;padding:6px 8px;font-size:.9rem;}
+.adjust-row .amt-input{font-family:var(--font-display);font-size:1.1rem;width:52px;text-align:center;padding:6px 4px;}
+.adjust-row .stepper{display:flex;align-items:center;gap:4px;}
+.adjust-row .stepper button{width:36px;height:36px;border-radius:8px;border:1px solid var(--cinza-claro);background:transparent;color:var(--off-white);cursor:pointer;}
+
+.kbd-hint{font-size:.75rem;color:var(--cinza-claro);}
+.kbd-hint kbd{background:var(--preto-suave);border:1px solid var(--cinza-claro);border-radius:4px;padding:1px 6px;font-family:var(--font-body);}
+
+/* ---- controle no celular: alvos de toque maiores, sem depender de teclado ---- */
+@media (max-width:600px){
+  .control{padding:12px 14px 18px;gap:12px;}
+  .control-title{font-size:1.3rem;}
+  .kbd-hint{display:none;}
+  .header-actions{width:100%;justify-content:flex-start;}
+  .score-strip{width:100%;}
+  .btn{padding:15px 24px;font-size:1rem;min-height:48px;}
+  .btn-sm{min-height:40px;padding:10px 16px;}
+  .team-btn-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
+  .team-btn{padding:16px 14px;min-height:56px;}
+  .adjust-row .stepper button{width:44px;height:44px;font-size:1.1rem;}
+  .big-clock{font-size:2.6rem;}
+  input[type=text],input[type=number]{padding:12px 14px;font-size:1rem;min-height:44px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+import { h, render } from 'https://esm.sh/preact@10.19.6';
+import { useState, useEffect, useRef, useCallback } from 'https://esm.sh/preact@10.19.6/hooks';
+import htm from 'https://esm.sh/htm@3.1.1';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
+import { getDatabase, ref as dbRef, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js';
+
+const html = htm.bind(h);
+const LOGO_URL = 'https://flow.1b.org.br/wp-content/uploads/2026/08/logo-flow-2026.png';
+
+/* =========================================================
+   CONSTANTES DO JOGO — editar frases aqui
+   ========================================================= */
+const LEVELS = [
+  { name: 'FÁCIL', phrases: [
+    { frase: 'Chegou cedo', antonimo: 'Foi tarde' },
+    { frase: 'Subiu rápido', antonimo: 'Desceu devagar' },
+    { frase: 'Entrou calado', antonimo: 'Saiu gritando' },
+    { frase: 'Acordou disposto', antonimo: 'Dormiu cansado' },
+    { frase: 'Começou bem', antonimo: 'Terminou mal' },
+    { frase: 'Comprou barato', antonimo: 'Vendeu caro' },
+  ]},
+  { name: 'MÉDIO', phrases: [
+    { frase: 'Chegou no louvor', antonimo: 'Foi no anúncio' },
+    { frase: 'Entrou orando', antonimo: 'Saiu xingando' },
+    { frase: 'Deu dízimo', antonimo: 'Pegou troco' },
+    { frase: 'Serviu contente', antonimo: 'Assistiu emburrado' },
+    { frase: 'Trouxe visitante', antonimo: 'Levou membro' },
+    { frase: 'Ficou até o fim', antonimo: 'Saiu no começo' },
+    { frase: 'Cantou animado', antonimo: 'Ouviu desanimado' },
+  ]},
+  { name: 'DIFÍCIL', phrases: [
+    { frase: 'Perdoou rápido', antonimo: 'Guardou devagar' },
+    { frase: 'Amou primeiro', antonimo: 'Odiou depois' },
+    { frase: 'Deu tudo', antonimo: 'Tirou nada' },
+    { frase: 'Nasceu de novo', antonimo: 'Morreu de velho' },
+    { frase: 'Acendeu a luz', antonimo: 'Apagou o escuro' },
+    { frase: 'Semeou pouco', antonimo: 'Colheu muito' },
+  ]},
+];
+const FINAL_PHRASE = { frase: 'NOVOS COMEÇOS', antonimo: 'VELHOS FINS' };
+const LEVEL_NAMES = ['FÁCIL', 'MÉDIO', 'DIFÍCIL', 'RODADA FINAL'];
+const ACERTO_POINTS = 1;
+const GOL_POINTS = 3;
+const FINAL_POINTS = 5;
+const FRASE_DURATION = 10000;
+
+function currentPhrases(levelIndex) {
+  return levelIndex < 3 ? LEVELS[levelIndex].phrases : [FINAL_PHRASE];
+}
+
+/* =========================================================
+   SINCRONIZAÇÃO — Firebase Realtime Database (telão e painel
+   rodam em aparelhos diferentes). Mesmo projeto do TalkFlow 01,
+   path próprio pra não colidir com o estado do outro app.
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: 'AIzaSyAKN8mRoXydV52eF1QZYNgJ_C0VFQPVTnM',
+  authDomain: 'talkflow-dba50.firebaseapp.com',
+  databaseURL: 'https://talkflow-dba50-default-rtdb.firebaseio.com',
+  projectId: 'talkflow-dba50',
+  storageBucket: 'talkflow-dba50.firebasestorage.app',
+  messagingSenderId: '388105576650',
+  appId: '1:388105576650:web:dc25b4d124d18809499433',
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+// path aninhado em talkflow/ porque as regras do RTDB só liberam esse prefixo
+const stateRef = dbRef(db, 'talkflow/velhosfins');
+
+function pushState(state) {
+  set(stateRef, state);
+}
+// Firebase RTDB não guarda arrays vazios (viram null na leitura) —
+// reconstitui os campos que podem sumir contra os defaults.
+function sanitizeState(raw) {
+  const base = initialState();
+  if (!raw) return base;
+  return {
+    ...base, ...raw,
+    teams: raw.teams || [],
+    timer: { ...base.timer, ...(raw.timer || {}) },
+  };
+}
+function subscribeState(handler) {
+  return onValue(stateRef, (snap) => { if (snap.exists()) handler(sanitizeState(snap.val())); });
+}
+async function fetchInitialState() {
+  try {
+    const snap = await get(stateRef);
+    return snap.exists() ? sanitizeState(snap.val()) : initialState();
+  } catch (e) {
+    return initialState();
+  }
+}
+
+/* =========================================================
+   SONS — gerados via Web Audio API, sem arquivos externos
+   ========================================================= */
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function beep(freq, start, dur, type, gain) {
+  const ctx = getCtx();
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  g.gain.value = gain || 0.2;
+  osc.connect(g); g.connect(ctx.destination);
+  const t0 = ctx.currentTime + start;
+  osc.start(t0);
+  g.gain.setValueAtTime(g.gain.value, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.stop(t0 + dur + 0.02);
+}
+function playLargada() { beep(440, 0, 0.12, 'square', 0.2); beep(880, 0.12, 0.15, 'square', 0.2); }
+function playAcerto() { beep(660, 0, 0.1, 'sine', 0.22); beep(990, 0.1, 0.16, 'sine', 0.22); }
+function playErro() { beep(160, 0, 0.22, 'sawtooth', 0.25); }
+function playTimeout() { for (let i = 0; i < 3; i++) beep(220, i * 0.22, 0.16, 'sawtooth', 0.22); }
+function playGol() { [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => beep(f, i * 0.08, 0.32, 'triangle', 0.24)); }
+function playNeutro() { beep(500, 0, 0.16, 'sine', 0.16); }
+function playSoundByName(name) {
+  if (name === 'start') playLargada();
+  else if (name === 'acerto') playAcerto();
+  else if (name === 'erro') playErro();
+  else if (name === 'timeout') playTimeout();
+  else if (name === 'gol') playGol();
+  else if (name === 'neutro') playNeutro();
+}
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+function freshTimer(durationMs) {
+  return { running: false, durationMs: durationMs || 0, startedAt: null, accumulatedMs: 0 };
+}
+function runningTimer(durationMs) {
+  return { running: true, durationMs, startedAt: Date.now(), accumulatedMs: 0 };
+}
+function initialState() {
+  return {
+    teams: [],
+    phase: 'setup', // setup | playing | levelIntro | podium
+    levelIndex: 0,
+    pendingLevel: 0,
+    phraseIndex: 0,
+    subphase: 'frase', // frase | golDecision | gol | perdeu | finalExplode | placar
+    attemptTeam: null,
+    erroCount: 0,
+    timer: freshTimer(FRASE_DURATION),
+    missSeq: 0,
+    missKind: null,
+    showScoreboard: false,
+    muted: false,
+    soundSeq: 0,
+    sound: null,
+  };
+}
+function timerElapsedMs(timer) {
+  return timer.accumulatedMs + (timer.running && timer.startedAt ? Date.now() - timer.startedAt : 0);
+}
+function formatDown(remainingMs) {
+  return String(Math.max(0, Math.ceil(remainingMs / 1000)));
+}
+function sortedTeams(teams) {
+  return teams.map((t, idx) => ({ ...t, idx })).sort((a, b) => b.points - a.points);
+}
+
+/* =========================================================
+   LÓGICA PURA DO JOGO (usada só no Controle, que é a autoridade)
+   ========================================================= */
+function goToNext(prev) {
+  const phrases = currentPhrases(prev.levelIndex);
+  if (prev.phraseIndex < phrases.length - 1) {
+    return { ...prev, phraseIndex: prev.phraseIndex + 1, subphase: 'frase', attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION) };
+  }
+  if (prev.levelIndex < 3) {
+    return { ...prev, phase: 'levelIntro', pendingLevel: prev.levelIndex + 1 };
+  }
+  return { ...prev, phase: 'podium' };
+}
+function applyMiss(prev, source) {
+  if (prev.subphase !== 'frase') return prev;
+  const soundName = source === 'timeout' ? 'timeout' : 'erro';
+  if (prev.erroCount >= 1) {
+    return { ...goToNext(prev), sound: soundName, soundSeq: prev.soundSeq + 1, missSeq: prev.missSeq + 1, missKind: 'queimou' };
+  }
+  const team = prev.attemptTeam ?? 0;
+  return {
+    ...prev,
+    attemptTeam: team === 0 ? 1 : 0,
+    erroCount: 1,
+    timer: runningTimer(FRASE_DURATION),
+    sound: soundName, soundSeq: prev.soundSeq + 1,
+    missSeq: prev.missSeq + 1, missKind: 'passou',
+  };
+}
+
+/* =========================================================
+   HOOKS
+   ========================================================= */
+function useTick(active) {
+  const [, setN] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => setN((n) => n + 1), 100);
+    return () => clearInterval(id);
+  }, [active]);
+}
+
+/* motor da contagem de 10s da frase: roda só no Controle (autoridade) */
+function useFraseCountdown(state, updateState) {
+  useEffect(() => {
+    if (state.phase !== 'playing' || state.subphase !== 'frase' || !state.timer.running) return;
+    const id = setInterval(() => {
+      updateState((prev) => {
+        if (prev.subphase !== 'frase' || !prev.timer.running) return prev;
+        const remaining = prev.timer.durationMs - timerElapsedMs(prev.timer);
+        if (remaining <= 0) return applyMiss(prev, 'timeout');
+        return prev;
+      });
+    }, 100);
+    return () => clearInterval(id);
+  }, [state.phase, state.subphase, state.timer.running, state.timer.startedAt]);
+}
+
+/* avanço automático das telas de animação (gol/perdeu/explosão final) */
+function useAutoAdvance(state, updateState) {
+  useEffect(() => {
+    if (state.subphase === 'gol' || state.subphase === 'perdeu') {
+      const t = setTimeout(() => {
+        updateState((prev) => (prev.subphase === state.subphase ? { ...prev, subphase: 'placar' } : prev));
+      }, 2400);
+      return () => clearTimeout(t);
+    }
+    if (state.subphase === 'finalExplode') {
+      const t = setTimeout(() => {
+        updateState((prev) => (prev.subphase === 'finalExplode' ? { ...prev, phase: 'podium' } : prev));
+      }, 4500);
+      return () => clearTimeout(t);
+    }
+  }, [state.subphase]);
+}
+
+/* =========================================================
+   LANDING — escolha de tela
+   ========================================================= */
+function Landing() {
+  return html`
+    <div class="landing">
+      <img class="logo" src=${LOGO_URL} alt="Flow" />
+      <div>
+        <div class="display display-huge">Velhos Fins</div>
+        <p style="color:var(--cinza-claro);max-width:480px;margin:8px auto 0;">
+          TalkFlow 02 · Rede Flow. Abra as duas telas: uma no telão, outra no notebook de operação.
+        </p>
+      </div>
+      <div class="buttons">
+        <a class="btn btn-primary" href="?view=palco" target="_blank" rel="noopener">Abrir Palco (telão)</a>
+        <a class="btn btn-outline" href="?view=controle" target="_blank" rel="noopener">Abrir Painel de Controle</a>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   PALCO
+   ========================================================= */
+function Confetti() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas.getContext('2d');
+    let raf = 0;
+    const colors = ['#EBE8E0', '#186678', '#2589A0', '#D8D4CA'];
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+    const particles = Array.from({ length: 160 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * canvas.height,
+      w: 6 + Math.random() * 8,
+      h: 6 + Math.random() * 10,
+      vy: 1.5 + Math.random() * 2.5,
+      vx: -1 + Math.random() * 2,
+      rot: Math.random() * Math.PI,
+      vrot: -0.15 + Math.random() * 0.3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+    }));
+    function frame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        p.y += p.vy; p.x += p.vx; p.rot += p.vrot;
+        if (p.y > canvas.height + 20) { p.y = -20; p.x = Math.random() * canvas.width; }
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      raf = requestAnimationFrame(frame);
+    }
+    frame();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
+  }, []);
+  return html`<canvas class="confetti" ref=${ref}></canvas>`;
+}
+
+function MiniScore({ teams }) {
+  return html`
+    <div class="mini-score">
+      ${teams.map((t, i) => html`<span key=${i}>${t.name} <b>${t.points}</b></span>`)}
+    </div>
+  `;
+}
+
+function MissFlash({ missSeq, missKind }) {
+  const [show, setShow] = useState(false);
+  const prevSeq = useRef(missSeq);
+  useEffect(() => {
+    if (missSeq && missSeq !== prevSeq.current) {
+      prevSeq.current = missSeq;
+      setShow(true);
+      const t = setTimeout(() => setShow(false), 1100);
+      return () => clearTimeout(t);
+    }
+  }, [missSeq]);
+  if (!show) return null;
+  return html`<div class="miss-flash pop-in">${missKind === 'queimou' ? 'Queimou! Próxima frase…' : 'Errou! Passa a vez'}</div>`;
+}
+
+function StageScoreboard({ teams }) {
+  const ranked = sortedTeams(teams);
+  const top = ranked.length ? ranked[0].points : 0;
+  return html`
+    <div class="stage pop-in" key="scoreboard">
+      <div class="stage-kicker">Placar</div>
+      <div class="rank-list">
+        ${ranked.map((t) => html`
+          <div class="rank-row ${t.points === top && top > 0 ? 'winner' : ''}" key=${t.idx}>
+            <div class="rank-name">${t.name}</div>
+            <div class="rank-track">
+              <div class="rank-bar" style=${`transform:scaleX(${top > 0 ? t.points / top : 0})`}></div>
+              <div class="rank-value-wrap" style=${`transform:translateX(${(top > 0 ? (t.points / top) * 100 : 0) - 100}%)`}>
+                <span class="rank-value">${t.points}</span>
+              </div>
+            </div>
+          </div>
+        `)}
+      </div>
+    </div>
+  `;
+}
+
+function StageFrase({ state }) {
+  useTick(state.timer.running);
+  const phrases = currentPhrases(state.levelIndex);
+  const current = phrases[state.phraseIndex];
+  const remaining = state.timer.durationMs - timerElapsedMs(state.timer);
+  return html`
+    <div class="stage" key=${`frase-${state.levelIndex}-${state.phraseIndex}`}>
+      <${MissFlash} missSeq=${state.missSeq} missKind=${state.missKind} />
+      <div class="stage-kicker">${LEVEL_NAMES[state.levelIndex]} · Frase ${state.phraseIndex + 1} de ${phrases.length}</div>
+      <div class="display display-lg fade-up">${current.frase}</div>
+      <div class="timer ${state.timer.running ? 'running' : ''} ${remaining <= 0 ? 'done' : ''}">${formatDown(remaining)}</div>
+    </div>
+  `;
+}
+
+function StageReveal({ state }) {
+  const phrases = currentPhrases(state.levelIndex);
+  const current = phrases[state.phraseIndex];
+  const team = state.teams[state.attemptTeam];
+  return html`
+    <div class="stage pop-in" key="reveal">
+      <div class="stage-kicker">${team.name} acertou!</div>
+      <div class="display display-md" style="color:var(--cinza-claro);">${current.frase}</div>
+      <div class="winner-name pop-in">${current.antonimo}</div>
+    </div>
+  `;
+}
+
+function StageGol({ state }) {
+  const team = state.teams[state.attemptTeam];
+  return html`
+    <div class="stage" key="gol">
+      <div class="winner-banner goal-pop">
+        <div class="display display-huge accent">GOOOL!</div>
+        <div class="display display-md">${team.name} · +${GOL_POINTS} pontos</div>
+      </div>
+    </div>
+  `;
+}
+
+function StagePerdeu({ state }) {
+  const team = state.teams[state.attemptTeam];
+  return html`
+    <div class="stage fade-up" key="perdeu">
+      <div class="stage-kicker">O goleiro defendeu</div>
+      <div class="display display-lg">${team.name} · +${ACERTO_POINTS} ponto</div>
+    </div>
+  `;
+}
+
+function StageFinalExplode({ state }) {
+  const team = state.teams[state.attemptTeam];
+  return html`
+    <div class="stage pop-in" key="final-explode">
+      <${Confetti} />
+      <div class="display display-huge accent">VELHOS FINS</div>
+      <div class="display display-md">${team.name} · +${FINAL_POINTS} pontos</div>
+    </div>
+  `;
+}
+
+function StageLevelIntro({ level }) {
+  return html`
+    <div class="stage pop-in" key=${`level-${level}`}>
+      <div class="stage-kicker">Próximo nível</div>
+      <div class="display display-huge">${LEVEL_NAMES[level]}</div>
+    </div>
+  `;
+}
+
+function StagePodium({ state }) {
+  const ranked = sortedTeams(state.teams);
+  const [first, second] = ranked;
+  return html`
+    <div class="stage pop-in" key="podium">
+      <${Confetti} />
+      <div class="stage-kicker">Velhos Fins · Resultado final</div>
+      <div class="podium-wrap">
+        ${second ? html`
+          <div class="podium-slot">
+            <div class="display display-md">${second.name}</div>
+            <div class="podium-block second"><div class="podium-rank">2</div></div>
+          </div>` : ''}
+        ${first ? html`
+          <div class="podium-slot">
+            <div class="winner-name" style="font-size:clamp(2rem,6vw,4.5rem);">${first.name}</div>
+            <div class="podium-block first"><div class="podium-rank">1</div></div>
+          </div>` : ''}
+      </div>
+      <div class="display display-md" style="color:var(--cinza-claro);">
+        ${first ? html`${first.points} × ${second ? second.points : 0}` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function StageView() {
+  const [state, setState] = useState(initialState);
+  const [unlocked, setUnlocked] = useState(false);
+  const lastSoundSeqRef = useRef(null);
+
+  useEffect(() => {
+    if (!unlocked) return;
+    return subscribeState(setState);
+  }, [unlocked]);
+
+  useEffect(() => {
+    if (lastSoundSeqRef.current === null) { lastSoundSeqRef.current = state.soundSeq; return; }
+    if (state.soundSeq !== lastSoundSeqRef.current) {
+      lastSoundSeqRef.current = state.soundSeq;
+      if (!state.muted && state.sound) playSoundByName(state.sound);
+    }
+  }, [state.soundSeq]);
+
+  if (!unlocked) {
+    return html`
+      <div class="team-tap" onClick=${() => { getCtx(); setUnlocked(true); }}>
+        <img class="logo" src=${LOGO_URL} alt="Flow" style="width:160px;" />
+        <div class="display display-md">Toque para iniciar o Palco</div>
+      </div>
+    `;
+  }
+
+  const showMini = state.phase === 'playing' && !state.showScoreboard &&
+    (state.subphase === 'frase' || state.subphase === 'golDecision' || state.subphase === 'gol' || state.subphase === 'perdeu');
+
+  let body;
+  if (state.showScoreboard) body = html`<${StageScoreboard} teams=${state.teams} />`;
+  else if (state.phase === 'setup') body = html`
+    <div class="stage" key="idle">
+      <img class="logo" src=${LOGO_URL} alt="Flow" style="width:180px;" />
+      <div class="display display-lg">Preparando Velhos Fins…</div>
+    </div>`;
+  else if (state.phase === 'levelIntro') body = html`<${StageLevelIntro} level=${state.pendingLevel} />`;
+  else if (state.phase === 'podium') body = html`<${StagePodium} state=${state} />`;
+  else if (state.subphase === 'frase') body = html`<${StageFrase} state=${state} />`;
+  else if (state.subphase === 'golDecision') body = html`<${StageReveal} state=${state} />`;
+  else if (state.subphase === 'gol') body = html`<${StageGol} state=${state} />`;
+  else if (state.subphase === 'perdeu') body = html`<${StagePerdeu} state=${state} />`;
+  else if (state.subphase === 'finalExplode') body = html`<${StageFinalExplode} state=${state} />`;
+  else if (state.subphase === 'placar') body = html`<${StageScoreboard} teams=${state.teams} />`;
+
+  return html`
+    <div>
+      <img class="logo-corner" src=${LOGO_URL} alt="Flow" />
+      ${showMini ? html`<${MiniScore} teams=${state.teams} />` : ''}
+      ${body}
+    </div>
+  `;
+}
+
+/* =========================================================
+   CONTROLE
+   ========================================================= */
+function TeamSetup({ onStart }) {
+  const [names, setNames] = useState(['', '']);
+  const ready = names.every((n) => n.trim().length > 0);
+  return html`
+    <div class="setup-grid">
+      <div class="display display-md">Configurar os times</div>
+      <p style="color:var(--cinza-claro);font-size:.85rem;margin:0;">Dois times, cada um com um goleiro fixo (só informação do jogo, não precisa cadastrar).</p>
+      ${names.map((n, i) => html`
+        <div class="team-row" key=${i}>
+          <span class="team-idx">${i + 1}</span>
+          <input type="text" placeholder=${`Nome do time ${i + 1}`} value=${n}
+            onInput=${(e) => setNames((prev) => prev.map((v, idx) => idx === i ? e.target.value : v))} />
+        </div>
+      `)}
+      <button class="btn btn-primary btn-block" disabled=${!ready}
+        onClick=${() => onStart(names.map((n) => ({ name: n.trim(), points: 0 })))}>
+        Começar
+      </button>
+    </div>
+  `;
+}
+
+function AdjustPanel({ state, updateState }) {
+  function adjust(idx, delta) {
+    updateState((prev) => ({ ...prev, teams: prev.teams.map((t, i) => i === idx ? { ...t, points: t.points + delta } : t) }));
+  }
+  function setPoints(idx, value) {
+    const points = Number(value);
+    if (!Number.isFinite(points)) return;
+    updateState((prev) => ({ ...prev, teams: prev.teams.map((t, i) => i === idx ? { ...t, points } : t) }));
+  }
+  function setName(idx, value) {
+    updateState((prev) => ({ ...prev, teams: prev.teams.map((t, i) => i === idx ? { ...t, name: value } : t) }));
+  }
+  return html`
+    <details class="adjust-panel">
+      <summary>Corrigir nome ou pontos (em caso de erro)</summary>
+      <div class="adjust-grid">
+        ${state.teams.map((t, i) => html`
+          <div class="adjust-row" key=${i}>
+            <input class="adjust-name" type="text" value=${t.name}
+              onInput=${(e) => setName(i, e.target.value)} />
+            <div class="stepper">
+              <button onClick=${() => adjust(i, -1)}>−</button>
+              <input class="amt-input" type="number" value=${t.points}
+                onInput=${(e) => setPoints(i, e.target.value)} />
+              <button onClick=${() => adjust(i, 1)}>+</button>
+            </div>
+          </div>
+        `)}
+      </div>
+    </details>
+  `;
+}
+
+function LevelIntroControl({ state, updateState }) {
+  const li = state.pendingLevel;
+  function start() {
+    updateState((prev) => ({
+      ...prev, phase: 'playing', levelIndex: li, phraseIndex: 0, subphase: 'frase',
+      attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION),
+      sound: 'start', soundSeq: prev.soundSeq + 1,
+    }));
+  }
+  return html`
+    <div class="round-panel">
+      <div class="display display-md">Próximo: ${LEVEL_NAMES[li]}</div>
+      <button class="btn btn-primary btn-block" onClick=${start}>Começar ${LEVEL_NAMES[li]}</button>
+    </div>
+  `;
+}
+
+function nextLabel(state) {
+  if (state.levelIndex === 3) return 'Ver Pódio';
+  const phrases = currentPhrases(state.levelIndex);
+  return state.phraseIndex >= phrases.length - 1 ? 'Próximo nível' : 'Próxima frase';
+}
+
+function PlayControl({ state, updateState }) {
+  useTick(state.timer.running);
+  useFraseCountdown(state, updateState);
+  useAutoAdvance(state, updateState);
+
+  const phrases = currentPhrases(state.levelIndex);
+  const current = phrases[state.phraseIndex];
+
+  function selectTeam(i) {
+    updateState((prev) => prev.subphase === 'frase' ? { ...prev, attemptTeam: i } : prev);
+  }
+  function onAcertou() {
+    if (state.attemptTeam === null) return;
+    playAcerto();
+    updateState((prev) => {
+      if (prev.subphase !== 'frase' || prev.attemptTeam === null) return prev;
+      if (prev.levelIndex === 3) {
+        const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + FINAL_POINTS } : t);
+        return { ...prev, teams, subphase: 'finalExplode', sound: 'gol', soundSeq: prev.soundSeq + 1 };
+      }
+      return { ...prev, subphase: 'golDecision', sound: 'acerto', soundSeq: prev.soundSeq + 1 };
+    });
+  }
+  function onErrou() {
+    if (state.attemptTeam === null) return;
+    updateState((prev) => applyMiss(prev, 'erro'));
+  }
+  function onGol() {
+    updateState((prev) => {
+      if (prev.subphase !== 'golDecision') return prev;
+      const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + GOL_POINTS } : t);
+      return { ...prev, teams, subphase: 'gol', sound: 'gol', soundSeq: prev.soundSeq + 1 };
+    });
+  }
+  function onPerdeu() {
+    updateState((prev) => {
+      if (prev.subphase !== 'golDecision') return prev;
+      const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + ACERTO_POINTS } : t);
+      return { ...prev, teams, subphase: 'perdeu', sound: 'neutro', soundSeq: prev.soundSeq + 1 };
+    });
+  }
+  function onPular() {
+    updateState((prev) => prev.subphase === 'frase' ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+  }
+  function onVoltar() {
+    updateState((prev) => {
+      if (prev.subphase !== 'frase' || prev.phraseIndex <= 0) return prev;
+      return { ...prev, phraseIndex: prev.phraseIndex - 1, subphase: 'frase', attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION) };
+    });
+  }
+  function onProxima() {
+    updateState((prev) => prev.subphase === 'placar' ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+  }
+
+  let body;
+  if (state.subphase === 'frase') {
+    body = html`
+      <div>
+        <div class="subtext">Quem respondeu?</div>
+        <div class="team-btn-grid">
+          ${state.teams.map((t, i) => html`
+            <button class="team-btn ${state.attemptTeam === i ? 'active' : ''}" key=${i} onClick=${() => selectTeam(i)}>
+              <div class="n">${t.name}</div>
+            </button>
+          `)}
+        </div>
+        <div class="controls-row">
+          <div class="big-clock">${formatDown(state.timer.durationMs - timerElapsedMs(state.timer))}</div>
+          <button class="btn btn-primary" disabled=${state.attemptTeam === null} onClick=${onAcertou}>ACERTOU</button>
+          <button class="btn btn-outline" disabled=${state.attemptTeam === null} onClick=${onErrou}>ERROU</button>
+        </div>
+        <div class="controls-row">
+          <button class="btn btn-ghost btn-sm" disabled=${state.phraseIndex === 0} onClick=${onVoltar}>← Frase anterior</button>
+          <button class="btn btn-ghost btn-sm" onClick=${onPular}>Pular frase →</button>
+        </div>
+      </div>`;
+  } else if (state.subphase === 'golDecision') {
+    body = html`
+      <div class="round-panel">
+        <div class="subtext">${state.teams[state.attemptTeam].name} acertou! Fez gol?</div>
+        <div class="controls-row">
+          <button class="btn btn-primary" onClick=${onGol}>FEZ GOL</button>
+          <button class="btn btn-outline" onClick=${onPerdeu}>PERDEU / DEFENDEU</button>
+        </div>
+      </div>`;
+  } else if (state.subphase === 'gol' || state.subphase === 'perdeu' || state.subphase === 'finalExplode') {
+    body = html`<div class="subtext pulse">Telão em animação…</div>`;
+  } else if (state.subphase === 'placar') {
+    body = html`<button class="btn btn-primary btn-block" onClick=${onProxima}>${nextLabel(state)}</button>`;
+  }
+
+  return html`
+    <div class="round-panel">
+      <div>
+        <span class="pill">${LEVEL_NAMES[state.levelIndex]}</span>
+        <h2>Frase ${state.phraseIndex + 1} de ${phrases.length}</h2>
+        <div class="display display-md">${current.frase}</div>
+      </div>
+      ${body}
+    </div>
+  `;
+}
+
+function ControlView() {
+  const [state, setState] = useState(initialState);
+  const [loaded, setLoaded] = useState(false);
+  const liveStateRef = useRef(state);
+  useEffect(() => { liveStateRef.current = state; }, [state]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchInitialState().then((s) => { if (!cancelled) { setState(s); setLoaded(true); } });
+    return () => { cancelled = true; };
+  }, []);
+
+  const updateState = useCallback((updater) => {
+    setState((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (next !== prev) pushState(next);
+      return next;
+    });
+  }, []);
+
+  // atalhos de teclado: 1/2 seleciona time, A/E acerto/erro, G/D gol/defendeu,
+  // Espaço avança na tela de placar ou nível, ← volta, → pula, M muda, P mostra placar
+  useEffect(() => {
+    function onKey(e) {
+      const tag = e.target && e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const s = liveStateRef.current;
+      if (s.phase === 'levelIntro' && e.code === 'Space') {
+        e.preventDefault();
+        updateState((prev) => prev.phase === 'levelIntro' ? {
+          ...prev, phase: 'playing', levelIndex: prev.pendingLevel, phraseIndex: 0, subphase: 'frase',
+          attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION),
+          sound: 'start', soundSeq: prev.soundSeq + 1,
+        } : prev);
+        return;
+      }
+      if (s.phase !== 'playing') return;
+      if (s.subphase === 'frase') {
+        if (e.key === '1') updateState((prev) => prev.subphase === 'frase' ? { ...prev, attemptTeam: 0 } : prev);
+        else if (e.key === '2') updateState((prev) => prev.subphase === 'frase' ? { ...prev, attemptTeam: 1 } : prev);
+        else if ((e.key === 'a' || e.key === 'A') && s.attemptTeam !== null) {
+          playAcerto();
+          updateState((prev) => {
+            if (prev.subphase !== 'frase' || prev.attemptTeam === null) return prev;
+            if (prev.levelIndex === 3) {
+              const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + FINAL_POINTS } : t);
+              return { ...prev, teams, subphase: 'finalExplode', sound: 'gol', soundSeq: prev.soundSeq + 1 };
+            }
+            return { ...prev, subphase: 'golDecision', sound: 'acerto', soundSeq: prev.soundSeq + 1 };
+          });
+        } else if ((e.key === 'e' || e.key === 'E') && s.attemptTeam !== null) {
+          updateState((prev) => applyMiss(prev, 'erro'));
+        } else if (e.key === 'ArrowLeft') {
+          updateState((prev) => {
+            if (prev.subphase !== 'frase' || prev.phraseIndex <= 0) return prev;
+            return { ...prev, phraseIndex: prev.phraseIndex - 1, subphase: 'frase', attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION) };
+          });
+        } else if (e.key === 'ArrowRight') {
+          updateState((prev) => prev.subphase === 'frase' ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+        }
+      } else if (s.subphase === 'golDecision') {
+        if (e.key === 'g' || e.key === 'G') {
+          updateState((prev) => {
+            if (prev.subphase !== 'golDecision') return prev;
+            const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + GOL_POINTS } : t);
+            return { ...prev, teams, subphase: 'gol', sound: 'gol', soundSeq: prev.soundSeq + 1 };
+          });
+        } else if (e.key === 'd' || e.key === 'D') {
+          updateState((prev) => {
+            if (prev.subphase !== 'golDecision') return prev;
+            const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + ACERTO_POINTS } : t);
+            return { ...prev, teams, subphase: 'perdeu', sound: 'neutro', soundSeq: prev.soundSeq + 1 };
+          });
+        }
+      } else if (s.subphase === 'placar' && e.code === 'Space') {
+        e.preventDefault();
+        updateState((prev) => prev.subphase === 'placar' ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        updateState((prev) => ({ ...prev, muted: !prev.muted }));
+      } else if (e.key === 'p' || e.key === 'P') {
+        updateState((prev) => ({ ...prev, showScoreboard: !prev.showScoreboard }));
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [updateState]);
+
+  function startGame(teams) {
+    updateState((prev) => ({
+      ...prev, teams, phase: 'playing', levelIndex: 0, phraseIndex: 0, subphase: 'frase',
+      attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION),
+      sound: 'start', soundSeq: prev.soundSeq + 1,
+    }));
+  }
+
+  if (!loaded) {
+    return html`<div class="control"><div class="round-panel"><h2>Conectando…</h2></div></div>`;
+  }
+
+  let body;
+  if (state.phase === 'setup') {
+    body = html`<${TeamSetup} onStart=${startGame} />`;
+  } else if (state.phase === 'levelIntro') {
+    body = html`<${LevelIntroControl} state=${state} updateState=${updateState} />`;
+  } else if (state.phase === 'podium') {
+    body = html`<div class="round-panel"><h2>Pódio no telão</h2><div class="subtext">Campeão: ${sortedTeams(state.teams)[0]?.name}.</div></div>`;
+  } else {
+    body = html`<${PlayControl} state=${state} updateState=${updateState} />`;
+  }
+
+  return html`
+    <div class="control">
+      <div class="control-header">
+        <div class="control-title">Velhos Fins · Controle</div>
+        <div class="score-strip">
+          ${sortedTeams(state.teams).map((t) => html`
+            <span class="score-chip" key=${t.idx}>${t.name} <b>${t.points}</b></span>
+          `)}
+        </div>
+        <div class="header-actions">
+          <span class="kbd-hint"><kbd>1</kbd>/<kbd>2</kbd> time · <kbd>A</kbd>/<kbd>E</kbd> acerto/erro · <kbd>G</kbd>/<kbd>D</kbd> gol/defendeu · <kbd>Espaço</kbd> avança · <kbd>M</kbd> mudo · <kbd>P</kbd> placar</span>
+          <button class="btn btn-ghost btn-sm" onClick=${() => updateState((prev) => ({ ...prev, muted: !prev.muted }))}>
+            ${state.muted ? 'Som: desligado' : 'Som: ligado'}
+          </button>
+          <button class="btn btn-outline btn-sm" disabled=${state.phase === 'setup'}
+            onClick=${() => updateState((prev) => ({ ...prev, showScoreboard: !prev.showScoreboard }))}>
+            ${state.showScoreboard ? 'Ocultar placar' : 'Mostrar placar'}
+          </button>
+        </div>
+      </div>
+      <div class="control-main">
+        ${body}
+      </div>
+      ${state.phase !== 'setup' ? html`<${AdjustPanel} state=${state} updateState=${updateState} />` : ''}
+    </div>
+  `;
+}
+
+/* =========================================================
+   ROOT
+   ========================================================= */
+function App() {
+  const view = new URLSearchParams(location.search).get('view');
+  return html`
+    <div>
+      <div class="bg-layer bg-waves"></div>
+      <div class="bg-layer bg-grain"></div>
+      ${view === 'palco' ? html`<${StageView} />` : view === 'controle' ? html`<${ControlView} />` : html`<${Landing} />`}
+    </div>
+  `;
+}
+
+render(html`<${App} />`, document.getElementById('app'));
+</script>
+</body>
+</html>
