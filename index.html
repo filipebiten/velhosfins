@@ -70,10 +70,12 @@ input[type=number]{width:100px;}
 @keyframes popIn{from{opacity:0;transform:scale(.55) translateY(30px);}to{opacity:1;transform:scale(1) translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 @keyframes golPop{0%{transform:scale(.4) rotate(-8deg);opacity:0;}60%{transform:scale(1.15) rotate(3deg);opacity:1;}100%{transform:scale(1) rotate(0);}}
+@keyframes golLoop{0%,100%{transform:scale(1) rotate(-2deg);}50%{transform:scale(1.14) rotate(2deg);}}
 .fade-up{animation:fadeUp .5s var(--ease);}
 .pop-in{animation:popIn .55s var(--ease);}
 .pulse{animation:pulse 1.4s ease-in-out infinite;}
 .goal-pop{animation:golPop .6s var(--ease);}
+.goal-loop{animation:golLoop .8s ease-in-out infinite;display:inline-block;}
 
 /* ---- landing ---- */
 .landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;padding:24px;position:relative;z-index:1;}
@@ -216,7 +218,7 @@ const LEVEL_NAMES = ['FÁCIL', 'MÉDIO', 'DIFÍCIL', 'RODADA FINAL'];
 const ACERTO_POINTS = 1;
 const GOL_POINTS = 3;
 const FINAL_POINTS = 5;
-const FRASE_DURATION = 10000;
+const FRASE_DURATION = 15000;
 
 function currentPhrases(levelIndex) {
   return levelIndex < 3 ? LEVELS[levelIndex].phrases : [FINAL_PHRASE];
@@ -317,11 +319,11 @@ function runningTimer(durationMs) {
 function initialState() {
   return {
     teams: [],
-    phase: 'setup', // setup | playing | levelIntro | podium
+    phase: 'setup', // setup | ready | playing | levelIntro | podium
     levelIndex: 0,
     pendingLevel: 0,
     phraseIndex: 0,
-    subphase: 'frase', // frase | golDecision | gol | perdeu | finalExplode | placar
+    subphase: 'frase', // frase | golDecision | gol | golPoints | perdeu | finalExplode
     attemptTeam: null,
     erroCount: 0,
     timer: freshTimer(FRASE_DURATION),
@@ -356,11 +358,10 @@ function goToNext(prev) {
   }
   return { ...prev, phase: 'podium' };
 }
-function applyMiss(prev, source) {
+function applyMiss(prev) {
   if (prev.subphase !== 'frase') return prev;
-  const soundName = source === 'timeout' ? 'timeout' : 'erro';
   if (prev.erroCount >= 1) {
-    return { ...goToNext(prev), sound: soundName, soundSeq: prev.soundSeq + 1, missSeq: prev.missSeq + 1, missKind: 'queimou' };
+    return { ...goToNext(prev), sound: 'erro', soundSeq: prev.soundSeq + 1, missSeq: prev.missSeq + 1, missKind: 'queimou' };
   }
   const team = prev.attemptTeam ?? 0;
   return {
@@ -368,7 +369,7 @@ function applyMiss(prev, source) {
     attemptTeam: team === 0 ? 1 : 0,
     erroCount: 1,
     timer: runningTimer(FRASE_DURATION),
-    sound: soundName, soundSeq: prev.soundSeq + 1,
+    sound: 'erro', soundSeq: prev.soundSeq + 1,
     missSeq: prev.missSeq + 1, missKind: 'passou',
   };
 }
@@ -385,7 +386,9 @@ function useTick(active) {
   }, [active]);
 }
 
-/* motor da contagem de 10s da frase: roda só no Controle (autoridade) */
+/* motor da contagem da frase: roda só no Controle (autoridade). Ao zerar, só
+   congela o cronômetro em 0 e toca o som de fim de tempo — a frase continua
+   na tela e o operador escolhe quem acertou quando quiser, sem ação automática. */
 function useFraseCountdown(state, updateState) {
   useEffect(() => {
     if (state.phase !== 'playing' || state.subphase !== 'frase' || !state.timer.running) return;
@@ -393,30 +396,14 @@ function useFraseCountdown(state, updateState) {
       updateState((prev) => {
         if (prev.subphase !== 'frase' || !prev.timer.running) return prev;
         const remaining = prev.timer.durationMs - timerElapsedMs(prev.timer);
-        if (remaining <= 0) return applyMiss(prev, 'timeout');
+        if (remaining <= 0) {
+          return { ...prev, timer: { ...prev.timer, running: false, accumulatedMs: prev.timer.durationMs }, sound: 'timeout', soundSeq: prev.soundSeq + 1 };
+        }
         return prev;
       });
     }, 100);
     return () => clearInterval(id);
   }, [state.phase, state.subphase, state.timer.running, state.timer.startedAt]);
-}
-
-/* avanço automático das telas de animação (gol/perdeu/explosão final) */
-function useAutoAdvance(state, updateState) {
-  useEffect(() => {
-    if (state.subphase === 'gol' || state.subphase === 'perdeu') {
-      const t = setTimeout(() => {
-        updateState((prev) => (prev.subphase === state.subphase ? { ...prev, subphase: 'placar' } : prev));
-      }, 2400);
-      return () => clearTimeout(t);
-    }
-    if (state.subphase === 'finalExplode') {
-      const t = setTimeout(() => {
-        updateState((prev) => (prev.subphase === 'finalExplode' ? { ...prev, phase: 'podium' } : prev));
-      }, 4500);
-      return () => clearTimeout(t);
-    }
-  }, [state.subphase]);
 }
 
 /* =========================================================
@@ -558,11 +545,19 @@ function StageReveal({ state }) {
   `;
 }
 
-function StageGol({ state }) {
+function StageGolAnim() {
+  return html`
+    <div class="stage" key="gol-anim">
+      <div class="display display-huge accent goal-loop">GOOOL!</div>
+    </div>
+  `;
+}
+
+function StageGolPoints({ state }) {
   const team = state.teams[state.attemptTeam];
   return html`
-    <div class="stage" key="gol">
-      <div class="winner-banner goal-pop">
+    <div class="stage pop-in" key="gol-points">
+      <div class="winner-banner">
         <div class="display display-huge accent">GOOOL!</div>
         <div class="display display-md">${team.name} · +${GOL_POINTS} pontos</div>
       </div>
@@ -653,12 +648,11 @@ function StageView() {
     `;
   }
 
-  const showMini = state.phase === 'playing' && !state.showScoreboard &&
-    (state.subphase === 'frase' || state.subphase === 'golDecision' || state.subphase === 'gol' || state.subphase === 'perdeu');
+  const showMini = state.phase === 'playing' && !state.showScoreboard && state.subphase !== 'finalExplode';
 
   let body;
   if (state.showScoreboard) body = html`<${StageScoreboard} teams=${state.teams} />`;
-  else if (state.phase === 'setup') body = html`
+  else if (state.phase === 'setup' || state.phase === 'ready') body = html`
     <div class="stage" key="idle">
       <img class="logo" src=${LOGO_URL} alt="Flow" style="width:180px;" />
       <div class="display display-lg">Preparando Velhos Fins…</div>
@@ -667,10 +661,10 @@ function StageView() {
   else if (state.phase === 'podium') body = html`<${StagePodium} state=${state} />`;
   else if (state.subphase === 'frase') body = html`<${StageFrase} state=${state} />`;
   else if (state.subphase === 'golDecision') body = html`<${StageReveal} state=${state} />`;
-  else if (state.subphase === 'gol') body = html`<${StageGol} state=${state} />`;
+  else if (state.subphase === 'gol') body = html`<${StageGolAnim} />`;
+  else if (state.subphase === 'golPoints') body = html`<${StageGolPoints} state=${state} />`;
   else if (state.subphase === 'perdeu') body = html`<${StagePerdeu} state=${state} />`;
   else if (state.subphase === 'finalExplode') body = html`<${StageFinalExplode} state=${state} />`;
-  else if (state.subphase === 'placar') body = html`<${StageScoreboard} teams=${state.teams} />`;
 
   return html`
     <div>
@@ -702,6 +696,25 @@ function TeamSetup({ onStart }) {
         onClick=${() => onStart(names.map((n) => ({ name: n.trim(), points: 0 })))}>
         Começar
       </button>
+    </div>
+  `;
+}
+
+function ReadyControl({ state, updateState }) {
+  function start() {
+    updateState((prev) => ({
+      ...prev, phase: 'playing', levelIndex: 0, phraseIndex: 0, subphase: 'frase',
+      attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION),
+      sound: 'start', soundSeq: prev.soundSeq + 1,
+    }));
+  }
+  return html`
+    <div class="setup-grid">
+      <div class="display display-md">Times prontos</div>
+      <div class="team-btn-grid">
+        ${state.teams.map((t, i) => html`<div class="team-btn" key=${i}><div class="n">${t.name}</div></div>`)}
+      </div>
+      <button class="btn btn-primary btn-block" onClick=${start}>Começar</button>
     </div>
   `;
 }
@@ -757,7 +770,6 @@ function LevelIntroControl({ state, updateState }) {
 }
 
 function nextLabel(state) {
-  if (state.levelIndex === 3) return 'Ver Pódio';
   const phrases = currentPhrases(state.levelIndex);
   return state.phraseIndex >= phrases.length - 1 ? 'Próximo nível' : 'Próxima frase';
 }
@@ -765,7 +777,6 @@ function nextLabel(state) {
 function PlayControl({ state, updateState }) {
   useTick(state.timer.running);
   useFraseCountdown(state, updateState);
-  useAutoAdvance(state, updateState);
 
   const phrases = currentPhrases(state.levelIndex);
   const current = phrases[state.phraseIndex];
@@ -787,7 +798,7 @@ function PlayControl({ state, updateState }) {
   }
   function onErrou() {
     if (state.attemptTeam === null) return;
-    updateState((prev) => applyMiss(prev, 'erro'));
+    updateState((prev) => applyMiss(prev));
   }
   function onGol() {
     updateState((prev) => {
@@ -795,6 +806,9 @@ function PlayControl({ state, updateState }) {
       const teams = prev.teams.map((t, i) => i === prev.attemptTeam ? { ...t, points: t.points + GOL_POINTS } : t);
       return { ...prev, teams, subphase: 'gol', sound: 'gol', soundSeq: prev.soundSeq + 1 };
     });
+  }
+  function onVerPontos() {
+    updateState((prev) => prev.subphase === 'gol' ? { ...prev, subphase: 'golPoints' } : prev);
   }
   function onPerdeu() {
     updateState((prev) => {
@@ -812,8 +826,11 @@ function PlayControl({ state, updateState }) {
       return { ...prev, phraseIndex: prev.phraseIndex - 1, subphase: 'frase', attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION) };
     });
   }
-  function onProxima() {
-    updateState((prev) => prev.subphase === 'placar' ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+  function onProximaFrase() {
+    updateState((prev) => (prev.subphase === 'golPoints' || prev.subphase === 'perdeu') ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+  }
+  function onVerPodio() {
+    updateState((prev) => prev.subphase === 'finalExplode' ? { ...prev, phase: 'podium' } : prev);
   }
 
   let body;
@@ -847,10 +864,16 @@ function PlayControl({ state, updateState }) {
           <button class="btn btn-outline" onClick=${onPerdeu}>PERDEU / DEFENDEU</button>
         </div>
       </div>`;
-  } else if (state.subphase === 'gol' || state.subphase === 'perdeu' || state.subphase === 'finalExplode') {
-    body = html`<div class="subtext pulse">Telão em animação…</div>`;
-  } else if (state.subphase === 'placar') {
-    body = html`<button class="btn btn-primary btn-block" onClick=${onProxima}>${nextLabel(state)}</button>`;
+  } else if (state.subphase === 'gol') {
+    body = html`
+      <div class="round-panel">
+        <div class="subtext pulse">Telão mostrando "GOL!"…</div>
+        <button class="btn btn-primary btn-block" onClick=${onVerPontos}>Ver pontos →</button>
+      </div>`;
+  } else if (state.subphase === 'golPoints' || state.subphase === 'perdeu') {
+    body = html`<button class="btn btn-primary btn-block" onClick=${onProximaFrase}>${nextLabel(state)}</button>`;
+  } else if (state.subphase === 'finalExplode') {
+    body = html`<button class="btn btn-primary btn-block" onClick=${onVerPodio}>Ver Pódio →</button>`;
   }
 
   return html`
@@ -916,7 +939,7 @@ function ControlView() {
             return { ...prev, subphase: 'golDecision', sound: 'acerto', soundSeq: prev.soundSeq + 1 };
           });
         } else if ((e.key === 'e' || e.key === 'E') && s.attemptTeam !== null) {
-          updateState((prev) => applyMiss(prev, 'erro'));
+          updateState((prev) => applyMiss(prev));
         } else if (e.key === 'ArrowLeft') {
           updateState((prev) => {
             if (prev.subphase !== 'frase' || prev.phraseIndex <= 0) return prev;
@@ -939,9 +962,15 @@ function ControlView() {
             return { ...prev, teams, subphase: 'perdeu', sound: 'neutro', soundSeq: prev.soundSeq + 1 };
           });
         }
-      } else if (s.subphase === 'placar' && e.code === 'Space') {
+      } else if (s.subphase === 'gol' && e.code === 'Space') {
         e.preventDefault();
-        updateState((prev) => prev.subphase === 'placar' ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+        updateState((prev) => prev.subphase === 'gol' ? { ...prev, subphase: 'golPoints' } : prev);
+      } else if ((s.subphase === 'golPoints' || s.subphase === 'perdeu') && e.code === 'Space') {
+        e.preventDefault();
+        updateState((prev) => (prev.subphase === 'golPoints' || prev.subphase === 'perdeu') ? { ...goToNext(prev), sound: 'start', soundSeq: prev.soundSeq + 1 } : prev);
+      } else if (s.subphase === 'finalExplode' && e.code === 'Space') {
+        e.preventDefault();
+        updateState((prev) => prev.subphase === 'finalExplode' ? { ...prev, phase: 'podium' } : prev);
       }
       if (e.key === 'm' || e.key === 'M') {
         updateState((prev) => ({ ...prev, muted: !prev.muted }));
@@ -953,12 +982,8 @@ function ControlView() {
     return () => window.removeEventListener('keydown', onKey);
   }, [updateState]);
 
-  function startGame(teams) {
-    updateState((prev) => ({
-      ...prev, teams, phase: 'playing', levelIndex: 0, phraseIndex: 0, subphase: 'frase',
-      attemptTeam: null, erroCount: 0, timer: runningTimer(FRASE_DURATION),
-      sound: 'start', soundSeq: prev.soundSeq + 1,
-    }));
+  function confirmTeams(teams) {
+    updateState((prev) => ({ ...prev, teams, phase: 'ready' }));
   }
 
   if (!loaded) {
@@ -967,7 +992,9 @@ function ControlView() {
 
   let body;
   if (state.phase === 'setup') {
-    body = html`<${TeamSetup} onStart=${startGame} />`;
+    body = html`<${TeamSetup} onStart=${confirmTeams} />`;
+  } else if (state.phase === 'ready') {
+    body = html`<${ReadyControl} state=${state} updateState=${updateState} />`;
   } else if (state.phase === 'levelIntro') {
     body = html`<${LevelIntroControl} state=${state} updateState=${updateState} />`;
   } else if (state.phase === 'podium') {
@@ -990,7 +1017,7 @@ function ControlView() {
           <button class="btn btn-ghost btn-sm" onClick=${() => updateState((prev) => ({ ...prev, muted: !prev.muted }))}>
             ${state.muted ? 'Som: desligado' : 'Som: ligado'}
           </button>
-          <button class="btn btn-outline btn-sm" disabled=${state.phase === 'setup'}
+          <button class="btn btn-outline btn-sm" disabled=${state.phase === 'setup' || state.phase === 'ready'}
             onClick=${() => updateState((prev) => ({ ...prev, showScoreboard: !prev.showScoreboard }))}>
             ${state.showScoreboard ? 'Ocultar placar' : 'Mostrar placar'}
           </button>
@@ -999,7 +1026,7 @@ function ControlView() {
       <div class="control-main">
         ${body}
       </div>
-      ${state.phase !== 'setup' ? html`<${AdjustPanel} state=${state} updateState=${updateState} />` : ''}
+      ${state.phase !== 'setup' && state.phase !== 'ready' ? html`<${AdjustPanel} state=${state} updateState=${updateState} />` : ''}
     </div>
   `;
 }

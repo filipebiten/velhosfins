@@ -35,31 +35,43 @@ as regras do banco só liberam leitura/escrita dentro do prefixo `talkflow/`.
 ## Configurar os times
 
 No Controle: digite o nome dos dois times (eles escolhem ao vivo) e clique
-**Começar**. Cada time tem um goleiro fixo — é só informação do jogo, não
-precisa cadastrar.
+**Começar**. Isso leva pra uma tela **"Times prontos"** — só quando o
+operador clicar **Começar** ali é que a primeira frase entra no ar (o telão
+fica em "Preparando…" até esse clique, então dá tempo de ajustar tudo antes
+de abrir o jogo pro público).
+
+Cada time tem um goleiro fixo — é só informação do jogo, não precisa
+cadastrar.
 
 ## Como funciona cada frase
 
-1. **Frase** — aparece no telão com cronômetro de 10s. No Controle, toque no
-   time que está respondendo (**Quem respondeu?**), depois **ACERTOU** ou
-   **ERROU**.
-   - Errou (1ª vez): passa a vez pro outro time, cronômetro reinicia.
-   - Errou (2ª vez) ou tempo esgota sem resposta: frase queima, pula pra
-     próxima automaticamente.
+Tudo é manual — nada troca de tela sozinho, sempre é o operador que decide
+avançar.
+
+1. **Frase** — aparece no telão com cronômetro de **15s**. Quando o tempo
+   zera, ele só congela em 0: a frase continua na tela e o Controle continua
+   deixando escolher **quem respondeu** e clicar **ACERTOU**/**ERROU**
+   normalmente, sem pressa.
+   - **ERROU** (1ª vez): passa a vez pro outro time, cronômetro reinicia.
+   - **ERROU** (2ª vez): frase queima, pula pra próxima.
 2. **Acertou** — telão revela o antônimo. Controle pergunta **FEZ GOL** ou
    **PERDEU / DEFENDEU**.
-   - Fez gol → time fica com **3 pontos**.
-   - Perdeu/defendeu → time fica com **1 ponto**.
-3. **Placar** — telão mostra o placar animado por alguns segundos. Controle
-   mostra **Próxima frase**.
+   - **FEZ GOL** → telão mostra "GOL!" pulando em loop, indefinidamente, até
+     o operador clicar **Ver pontos →** no Controle. Só aí aparece o time e
+     "+3 pontos".
+   - **PERDEU / DEFENDEU** → telão mostra direto o time e "+1 ponto".
+3. Dali, o Controle mostra **Próxima frase** (ou **Próximo nível**, na
+   última frase do nível) — clique quando quiser seguir. Não existe uma tela
+   de placar automática entre uma frase e outra: se quiser mostrar o placar
+   geral, use o botão **Mostrar placar** a qualquer momento.
 
 Três níveis em ordem: **Fácil → Médio → Difícil**, com tela de transição
 anunciando o próximo nível no telão (**Começar [nível]** no Controle).
 
 **Rodada final** (1 frase, vale **5 pontos**): acertar "Novos Começos" →
 "Velhos Fins" estoura em tela cheia no telão com confete — é o nome da
-noite. Não tem etapa de gol nessa rodada; os 5 pontos são só por acertar.
-Depois disso vai direto pro pódio.
+noite. Não tem etapa de gol nessa rodada; os 5 pontos são só por acertar. A
+tela fica assim até o operador clicar **Ver Pódio →** no Controle.
 
 ## Controles extras (Controle)
 
@@ -74,7 +86,8 @@ Depois disso vai direto pro pódio.
 - `1` / `2` — seleciona qual time respondeu.
 - `A` / `E` — acertou / errou.
 - `G` / `D` — fez gol / perdeu-defendeu (na tela de revelação).
-- `Espaço` — avança (placar → próxima frase, ou começa o próximo nível).
+- `Espaço` — avança o passo atual (ver pontos, próxima frase, próximo
+  nível, ver pódio).
 - `←` / `→` — frase anterior / pular frase.
 - `M` — muda/desmuda o som.
 - `P` — mostra/esconde o placar.
