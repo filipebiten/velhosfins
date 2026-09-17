@@ -188,32 +188,43 @@ const LOGO_URL = 'https://flow.1b.org.br/wp-content/uploads/2026/08/logo-flow-20
    ========================================================= */
 const LEVELS = [
   { name: 'FÁCIL', phrases: [
-    { frase: 'Chegou cedo', antonimo: 'Foi tarde' },
-    { frase: 'Subiu rápido', antonimo: 'Desceu devagar' },
-    { frase: 'Entrou calado', antonimo: 'Saiu gritando' },
-    { frase: 'Acordou disposto', antonimo: 'Dormiu cansado' },
-    { frase: 'Começou bem', antonimo: 'Terminou mal' },
-    { frase: 'Comprou barato', antonimo: 'Vendeu caro' },
+    { frase: 'Alto-falante', resposta: 'Baixo-mudo', alternativas: ['baixo-calado'] },
+    { frase: 'Meia-noite', resposta: 'Inteira-dia', alternativas: ['inteiro-dia'] },
+    { frase: 'Bom dia', resposta: 'Mau noite', alternativas: ['má noite'] },
+    { frase: 'Tudo bem', resposta: 'Nada mal', alternativas: [] },
+    { frase: 'Mais ou menos', resposta: 'Menos ou mais', alternativas: [] },
+    { frase: 'Nunca mais', resposta: 'Sempre menos', alternativas: [] },
+    { frase: 'Chegou cedo', resposta: 'Foi tarde', alternativas: [] },
+    { frase: 'Porta aberta', resposta: 'Janela fechada', alternativas: [] },
+    { frase: 'Vida longa', resposta: 'Morte curta', alternativas: [] },
+    { frase: 'Fogo alto', resposta: 'Água baixa', alternativas: [] },
   ]},
   { name: 'MÉDIO', phrases: [
-    { frase: 'Chegou no louvor', antonimo: 'Foi no anúncio' },
-    { frase: 'Entrou orando', antonimo: 'Saiu xingando' },
-    { frase: 'Deu dízimo', antonimo: 'Pegou troco' },
-    { frase: 'Serviu contente', antonimo: 'Assistiu emburrado' },
-    { frase: 'Trouxe visitante', antonimo: 'Levou membro' },
-    { frase: 'Ficou até o fim', antonimo: 'Saiu no começo' },
-    { frase: 'Cantou animado', antonimo: 'Ouviu desanimado' },
+    { frase: 'Arranha-céu', resposta: 'Alisa-chão', alternativas: ['lixa-chão'] },
+    { frase: 'Quebra-cabeça', resposta: 'Conserta-pé', alternativas: ['arruma-pé'] },
+    { frase: 'Guarda-chuva', resposta: 'Solta-sol', alternativas: ['larga-sol'] },
+    { frase: 'Beija-flor', resposta: 'Cospe-raiz', alternativas: ['cospe-mato'] },
+    { frase: 'Guarda-costas', resposta: 'Perde-peito', alternativas: ['solta-peito'] },
+    { frase: 'Salva-vidas', resposta: 'Mata-mortes', alternativas: [] },
+    { frase: 'Coração mole', resposta: 'Cabeça dura', alternativas: [] },
+    { frase: 'Mão cheia', resposta: 'Pé vazio', alternativas: [] },
+    { frase: 'Amor eterno', resposta: 'Ódio passageiro', alternativas: [] },
+    { frase: 'Paz interior', resposta: 'Guerra exterior', alternativas: [] },
   ]},
   { name: 'DIFÍCIL', phrases: [
-    { frase: 'Perdoou rápido', antonimo: 'Guardou devagar' },
-    { frase: 'Amou primeiro', antonimo: 'Odiou depois' },
-    { frase: 'Deu tudo', antonimo: 'Tirou nada' },
-    { frase: 'Nasceu de novo', antonimo: 'Morreu de velho' },
-    { frase: 'Acendeu a luz', antonimo: 'Apagou o escuro' },
-    { frase: 'Semeou pouco', antonimo: 'Colheu muito' },
+    { frase: 'Guarda-noturno', resposta: 'Solta-diurno', alternativas: ['larga-diurno'] },
+    { frase: 'Para-brisa', resposta: 'Anda-vendaval', alternativas: ['segue-vendaval'] },
+    { frase: 'Passa-tempo', resposta: 'Segura-eternidade', alternativas: ['para-eternidade'] },
+    { frase: 'Pé-de-moleque', resposta: 'Mão-de-velho', alternativas: [] },
+    { frase: 'Muito obrigado', resposta: 'Pouco livre', alternativas: [] },
+    { frase: 'Silêncio absoluto', resposta: 'Barulho relativo', alternativas: [] },
+    { frase: 'Sorriso largo', resposta: 'Choro estreito', alternativas: [] },
+    { frase: 'Girassol', resposta: 'Para-sombra', alternativas: ['foge-sombra'] },
+    { frase: 'Alto-astral', resposta: 'Baixo-terrestre', alternativas: ['baixo-terreno'] },
+    { frase: 'Deus vivo', resposta: 'Ídolo morto', alternativas: [] },
   ]},
 ];
-const FINAL_PHRASE = { frase: 'NOVOS COMEÇOS', antonimo: 'VELHOS FINS' };
+const FINAL_PHRASE = { frase: 'Novos começos', resposta: 'VELHOS FINS', alternativas: [] };
 const LEVEL_NAMES = ['FÁCIL', 'MÉDIO', 'DIFÍCIL', 'RODADA FINAL'];
 const ACERTO_POINTS = 1;
 const GOL_POINTS = 3;
@@ -540,7 +551,7 @@ function StageReveal({ state }) {
     <div class="stage pop-in" key="reveal">
       <div class="stage-kicker">${team.name} acertou!</div>
       <div class="display display-md" style="color:var(--cinza-claro);">${current.frase}</div>
-      <div class="winner-name pop-in">${current.antonimo}</div>
+      <div class="winner-name pop-in">${current.resposta}</div>
     </div>
   `;
 }
@@ -882,6 +893,10 @@ function PlayControl({ state, updateState }) {
         <span class="pill">${LEVEL_NAMES[state.levelIndex]}</span>
         <h2>Frase ${state.phraseIndex + 1} de ${phrases.length}</h2>
         <div class="display display-md">${current.frase}</div>
+        <div class="display display-md accent">${current.resposta}</div>
+        ${current.alternativas.length > 0 ? html`
+          <div class="subtext">alt: ${current.alternativas.join(', ')}</div>
+        ` : ''}
       </div>
       ${body}
     </div>

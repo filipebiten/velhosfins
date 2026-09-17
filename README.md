@@ -97,5 +97,7 @@ Atalhos são ignorados enquanto o foco está num campo de texto.
 ## Editar as frases
 
 Array `LEVELS` no topo do `<script>` em `index.html`, formato
-`{ frase, antonimo }` por nível (`FÁCIL`, `MÉDIO`, `DIFÍCIL`), mais a
-constante `FINAL_PHRASE` pra rodada final.
+`{ frase, resposta, alternativas: [] }` por nível (`FÁCIL`, `MÉDIO`,
+`DIFÍCIL`), mais a constante `FINAL_PHRASE` pra rodada final. As
+`alternativas` aparecem só no Controle, como gabarito de apoio pro
+operador — o telão nunca mostra alternativas.
